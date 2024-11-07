@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 
 const loginAuth = async (req, res) => {
   const { email, password } = req.body;
+
   // Check for email and password
   if (!email || !password) {
     return res
@@ -12,6 +13,7 @@ const loginAuth = async (req, res) => {
   }
 
   try {
+    // Check if user exists in the database
     const user = await User.findOne({ email });
     if (!user) {
       return res
@@ -19,13 +21,15 @@ const loginAuth = async (req, res) => {
         .json({ success: false, message: "User Not Found" });
     }
 
+    // If user has no password, it is likely an issue with the user creation process
     if (!user.password) {
       console.error("Error: User password is undefined.");
       return res
-        .status(500)
+        .status(400) // Bad request instead of 500
         .json({ success: false, message: "User password is not set" });
     }
 
+    // Compare provided password with hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res
@@ -33,6 +37,7 @@ const loginAuth = async (req, res) => {
         .json({ success: false, message: "Invalid credentials" });
     }
 
+    // Create JWT token with user details and expiration time
     const token = jwt.sign(
       {
         _id: user._id,
@@ -42,6 +47,7 @@ const loginAuth = async (req, res) => {
       { expiresIn: "10d" }
     );
 
+    // Respond with token and user details
     res.status(200).json({
       success: true,
       token,
@@ -58,4 +64,9 @@ const loginAuth = async (req, res) => {
   }
 };
 
-export default loginAuth;
+const verify = (req, res) => {
+  // If user is authenticated, return user details
+  return res.status(200).json({ success: true, user: req.user });
+};
+
+export { loginAuth, verify };
