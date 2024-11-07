@@ -1,19 +1,57 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useAuth } from "../../context/authContext";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { logIn } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!email || !password) {
       setError("Please fill in both fields");
       return;
     }
-    // Handle form submission (e.g., API call) here
-    console.log("Form submitted:", { email, password });
-    setError("");
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
+        email,
+        password,
+      });
+
+      if (res.data.success) {
+        console.log("Login Successful:", res);
+        logIn(res.data.user);
+        localStorage.setItem("token", res.data.token);
+
+        // Redirect based on user role
+        if (res.data.user.role === "admin") {
+          navigate("/admin-dashboard");
+        } else {
+          navigate("/user-dashboard"); // Assuming you might have a user dashboard
+        }
+        setError(""); // Clear any previous errors
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        !error.response.data.success
+      ) {
+        setError(
+          error.response.data.message || "Login failed. Please try again."
+        );
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    }
   };
 
   return (
