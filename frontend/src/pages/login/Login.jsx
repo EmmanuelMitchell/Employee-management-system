@@ -30,11 +30,11 @@ export default function LoginForm() {
         localStorage.setItem("token", res.data.token);
 
         // Redirect based on user role
-        if (res.data.user.role === "admin") {
-          navigate("/admin-dashboard");
-        } else {
-          navigate("/user-dashboard"); // Assuming you might have a user dashboard
-        }
+        navigate("/admin-dashboard");
+        // if (res.data.user.role === "admin") {
+        // } else {
+        //   navigate("/user-dashboard"); // Assuming you might have a user dashboard
+        // }
         setError(""); // Clear any previous errors
       } else {
         setError("Login failed. Please try again.");
